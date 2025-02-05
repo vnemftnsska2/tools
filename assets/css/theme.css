@@ -1,0 +1,29 @@
+/* styles/theme.css */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap');
+
+:root {
+    /* Colors */
+    --primary: #4d72c3;
+    --primary-light: #edf1f9;
+    --bg-menu: #f8fafc;
+    --bg-content: #ffffff;
+    --text-primary: #2d3748;
+    --text-secondary: #4a5568;
+    --text-light: #718096;
+    --border-color: #e2e8f0;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: var(--bg-content);
+    color: var(--text-primary);
+}
+
+.dot-pattern {
+    background-image: radial-gradient(rgba(113, 128, 150, 0.15) 0.8px, transparent 0.5px);
+    background-size: 12px 12px;
+}

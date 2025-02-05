@@ -1,0 +1,36 @@
+<!-- header.html -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+
+<header class="md:hidden bg-[#f8fafc] fixed top-0 w-full z-50 border-b">
+    <div class="flex items-center justify-between h-14 px-4">
+        <div class="flex items-center gap-2">
+            <svg class="w-6 h-6 text-[#4d72c3]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+            </svg>
+            <h1 class="text-lg font-semibold text-[#4d72c3]" style="font-family: 'Poppins', sans-serif;">DevKit Pro</h1>
+        </div>
+        <button id="menuButton" class="text-[#4d72c3] p-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+            </svg>
+        </button>
+    </div>
+</header>
+
+<!-- 모바일 메뉴 -->
+<div id="mobileMenu" class="md:hidden fixed w-full bg-white -translate-y-full transition-transform duration-200 ease-in-out z-40 top-14 border-b shadow-sm">
+    <nav id="mobileNav" class="p-3 text-sm"></nav>
+</div>
+
+<!-- 데스크톱 사이드바 -->
+<div id="sidebar" class="hidden md:block fixed inset-y-0 left-0 w-64 bg-[#f8fafc] border-r z-30">
+    <div class="flex items-center h-14 px-6 border-b">
+        <div class="flex items-center gap-2">
+            <svg class="w-6 h-6 text-[#4d72c3]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+            </svg>
+            <h1 class="text-lg font-semibold text-[#4d72c3]" style="font-family: 'Poppins', sans-serif;">DevKit Pro</h1>
+        </div>
+    </div>
+    <nav id="desktopNav" class="p-3 text-sm"></nav>
+</div>
