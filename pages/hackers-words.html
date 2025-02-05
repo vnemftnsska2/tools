@@ -40,7 +40,6 @@
 
 <script>
     if (!window.words) window.words = [];
-    console.log("🔄 hackers-words.js is loading...");
     // 요소가 존재하는지 확인 후 이벤트 리스너 추가
     const searchInput = document.getElementById("searchInput");
     const dayFilter = document.getElementById("dayFilter");
@@ -52,7 +51,8 @@
 
     async function loadWords() {
         try {
-            const isGitHubPages = window.location.hostname.includes("github.io");
+            const currentPath = window.location.pathname;
+            const isGitHubPages = currentPath.includes("/tools/") ? "/tools" : "";
             const filePath = isGitHubPages
                 ? "https://vnemftnsska2.github.io/tools/public/hackers_words.xlsx"
                 : "../public/hackers_words.xlsx";
