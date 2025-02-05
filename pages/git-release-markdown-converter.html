@@ -1,0 +1,157 @@
+<div class="flex flex-col lg:flex-row gap-4 h-full">
+    <!-- 입력 영역 -->
+    <div class="flex-1 flex flex-col">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-2">
+            <div class="flex flex-wrap items-center gap-4">
+                <label class="text-xl font-semibold text-gray-700">Input HTML</label>
+                <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-2 text-sm text-gray-600">
+                        <input type="checkbox" id="includeAuthor" class="w-4 h-4 rounded border-gray-300">
+                        by 계정 포함
+                    </label>
+                    <label class="flex items-center gap-2 text-sm text-gray-600">
+                        <input type="checkbox" id="groupByType" class="w-4 h-4 rounded border-gray-300">
+                        태그별 분류
+                    </label>
+                </div>
+            </div>
+            <button onclick="clearInput()"
+                    class="shrink-0 px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded">
+                Clear
+            </button>
+        </div>
+        <div class="flex-1">
+           <textarea
+                   id="input"
+                   class="h-full w-full p-4 text-xs font-mono bg-gray-50 rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none resize-none"
+                   placeholder="여기에 HTML을 붙여넣으세요..."></textarea>
+        </div>
+    </div>
+
+    <!-- 중앙 버튼 -->
+    <div class="flex lg:flex-col items-center justify-center gap-4 py-2 lg:px-2">
+        <button
+                onclick="convertToMarkdown()"
+                class="px-4 py-2 bg-[#4d72c3] text-white text-sm rounded hover:bg-[#4d72c3]/90 active:bg-[#4d72c3]/80 transition-all focus:outline-none focus:ring-2 focus:ring-[#4d72c3] focus:ring-offset-2">
+            <span class="lg:hidden">변환</span>
+            <span class="hidden lg:inline">→</span>
+        </button>
+    </div>
+
+    <!-- 출력 영역 -->
+    <div class="flex-1 flex flex-col">
+        <div class="flex items-center justify-between mb-2">
+            <label class="text-xl font-semibold text-gray-700">Output Markdown</label>
+            <button onclick="copyOutput()"
+                    class="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded">
+                Copy
+            </button>
+        </div>
+        <div class="flex-1">
+           <textarea
+                   id="output"
+                   class="h-full w-full p-4 text-xs font-mono bg-gray-50 rounded-lg border border-gray-200 outline-none resize-none"
+                   readonly></textarea>
+        </div>
+    </div>
+    <!--  스크립트  -->
+    <script>
+        const TYPE_ORDER = {
+            'FEATURE': 1,
+            'FIX': 2,
+            'BUG': 3,
+            'REFACTOR': 4,
+            'OTHER': 5
+        };
+
+        function getCommitType(title) {
+            const upperTitle = title.toUpperCase();
+            if (upperTitle.startsWith('FEATURE')) return 'FEATURE';
+            if (upperTitle.startsWith('FIX')) return 'FIX';
+            if (upperTitle.startsWith('BUG')) return 'BUG';
+            if (upperTitle.startsWith('REFACTOR')) return 'REFACTOR';
+            return 'OTHER';
+        }
+
+        function convertToMarkdown() {
+            const input = document.getElementById('input').value;
+            const includeAuthor = document.getElementById('includeAuthor').checked;
+            const groupByType = document.getElementById('groupByType').checked;
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = input;
+
+            const listItems = tempDiv.querySelectorAll('li');
+            let items = [];
+
+            listItems.forEach(item => {
+                const fullText = item.textContent;
+                const parts = fullText.split(' by ');
+                const title = parts[0].trim();
+
+                let author = '';
+                if (includeAuthor && parts.length > 1) {
+                    const authorElement = item.querySelector('a.user-mention');
+                    if (authorElement) {
+                        author = authorElement.textContent;
+                    }
+                }
+
+                const linkElement = item.querySelector('a.issue-link');
+                if (linkElement) {
+                    const link = linkElement.href;
+                    const type = getCommitType(title);
+                    items.push({
+                        type,
+                        title,
+                        link,
+                        author,
+                        order: TYPE_ORDER[type]
+                    });
+                }
+            });
+
+            let result = '';
+
+            if (groupByType) {
+                // 타입별로 정렬
+                items.sort((a, b) => a.order - b.order);
+
+                let currentType = null;
+                items.forEach(item => {
+                    if (currentType !== item.type) {
+                        if (currentType !== null) result += '\n';
+                        result += `### ${item.type}\n`;
+                        currentType = item.type;
+                    }
+                    result += `- [${item.title}](${item.link})${includeAuthor && item.author ? ` by ${item.author}` : ''}\n`;
+                });
+            } else {
+                // 일반 나열
+                items.forEach(item => {
+                    result += `- [${item.title}](${item.link})${includeAuthor && item.author ? ` by ${item.author}` : ''}\n`;
+                });
+            }
+
+            document.getElementById('output').value = result;
+        }
+
+        function clearInput() {
+            document.getElementById('input').value = '';
+            document.getElementById('output').value = '';
+        }
+
+        function copyOutput() {
+            const output = document.getElementById('output');
+            output.select();
+            document.execCommand('copy');
+
+            // 복사 완료 알림
+            const button = document.querySelector('button:last-of-type');
+            const originalText = button.textContent;
+            button.textContent = 'Copied!';
+            setTimeout(() => {
+                button.textContent = originalText;
+            }, 1000);
+        }
+    </script>
+</div>
