@@ -9,12 +9,8 @@ async function initializeLayout() {
 async function loadPage(pageName) {
     try {
         const currentPath = window.location.pathname;
-        // GitHub Pages에서는 리포지토리명(`/tools/`)이 포함되어야 함
         const projectRoot = currentPath.includes("/tools/") ? "/tools" : "";
         const path = `${projectRoot}/pages/${pageName}.html`;
-
-        console.log(`Fetching: ${path}`); // 경로 디버깅 로그
-
         const response = await fetch(path);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
