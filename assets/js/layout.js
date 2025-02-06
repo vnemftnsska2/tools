@@ -23,17 +23,19 @@ async function loadPage(pageName) {
         }
 
         const pageContent = document.getElementById('page-content');
-        pageContent.innerHTML = html;
 
-        // 스크립트 재실행
-        Array.from(pageContent.getElementsByTagName('script')).forEach(script => {
-            const newScript = document.createElement('script');
-            Array.from(script.attributes).forEach(attr => {
-                newScript.setAttribute(attr.name, attr.value);
-            });
-            newScript.textContent = script.textContent;
-            script.parentNode.replaceChild(newScript, script);
-        });
+        // 기존 컨텐츠 삭제
+        while (pageContent.firstChild) {
+            pageContent.removeChild(pageContent.firstChild);
+        }
+
+        // 새로운 컨텐츠 삽입
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = html;
+        pageContent.appendChild(tempDiv);
+
+        // 기존 스크립트 삭제 후, 새로운 스크립트 실행
+        executeScripts(pageContent);
     } catch (error) {
         console.error('페이지 로드 실패:', error);
         document.getElementById('page-content').innerHTML =
@@ -47,6 +49,33 @@ async function loadComponents() {
 
     document.body.insertAdjacentHTML('afterbegin', await header.text());
     document.body.insertAdjacentHTML('beforeend', await content.text());
+}
+
+function executeScripts(container) {
+    const existingScripts = new Set();
+    document.querySelectorAll("script").forEach(script => {
+        if (script.src) existingScripts.add(script.src);
+    });
+
+    container.querySelectorAll("script").forEach(oldScript => {
+        const newScript = document.createElement("script");
+
+        if (oldScript.src) {
+            if (!existingScripts.has(oldScript.src)) {
+                newScript.src = oldScript.src;
+                newScript.async = false;
+                document.body.appendChild(newScript);
+                existingScripts.add(oldScript.src);
+            }
+        } else {
+            try {
+                new Function(oldScript.textContent)(); // 🔥 eval() 대신 Function() 사용
+            } catch (error) {
+                console.error("스크립트 실행 오류:", error);
+            }
+        }
+        oldScript.remove();
+    });
 }
 
 function renderNavigation() {

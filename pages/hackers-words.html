@@ -1,53 +1,97 @@
 <div class="flex flex-col gap-4">
-    <!-- 필터 영역 -->
-    <div class="bg-white p-4 rounded-lg border border-[#e2e8f0] shadow-sm">
-        <div class="flex flex-wrap gap-4">
-            <div class="flex-1 min-w-[200px]">
-                <input type="text"
-                       id="searchInput"
-                       placeholder="단어 검색..."
-                       class="w-full px-4 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#4d72c3] focus:ring-2 focus:ring-[#4d72c3]/20 outline-none">
-            </div>
-            <select id="dayFilter" class="px-4 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#4d72c3] focus:ring-2 focus:ring-[#4d72c3]/20 outline-none">
-                <option value="">모든 Day</option>
-            </select>
+    <!-- Day 필터 (체크박스 형태 + 전체 선택/해제) -->
+    <div class="flex flex-wrap gap-2 items-center">
+        <button id="selectAllDays" class="px-3 py-1 text-xs bg-gray-300 text-gray-900 rounded-md">전체 선택</button>
+        <button id="clearAllDays" class="px-3 py-1 text-xs bg-gray-300 text-gray-900 rounded-md">전체 해제</button>
+    </div>
+    <div id="dayFilterContainer" class="flex flex-wrap gap-2">
+        <!-- Day 체크박스 동적 생성 -->
+    </div>
+
+    <!-- 필터 & 정렬 -->
+    <div class="bg-white p-4 rounded-lg border border-[#e2e8f0] shadow-sm flex flex-wrap items-center gap-4">
+        <div class="flex-1 min-w-[150px]">
+            <input type="text"
+                   id="searchInput"
+                   placeholder="단어 검색..."
+                   class="w-full px-4 py-2 text-sm border border-gray-200 rounded-lg">
         </div>
+
+        <select id="sortFilter" class="px-4 py-2 text-sm border border-gray-200 rounded-lg">
+            <option value="default">정렬</option>
+            <option value="random">랜덤</option>
+            <option value="alphabet">알파벳</option>
+        </select>
+
+        <select id="posFilter" class="px-4 py-2 text-sm border border-gray-200 rounded-lg">
+            <option value="">품사</option>
+            <option value="n.">명사</option>
+            <option value="v.">동사</option>
+            <option value="adj.">형용사</option>
+            <option value="adv.">부사</option>
+            <option value="phr.">구</option>
+        </select>
+
+        <button id="toggleMeanings" class="px-4 py-2 bg-[#4d72c3] text-white text-sm rounded-lg">
+            뜻 보이기/숨기기
+        </button>
     </div>
 
     <!-- 단어장 그리드 -->
-    <div id="wordsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div id="wordsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         <!-- 단어 카드 템플릿 -->
     </div>
 </div>
 
 <template id="wordCardTemplate">
-    <div class="bg-white p-4 rounded-lg border border-[#e2e8f0] shadow-sm hover:shadow-md transition-shadow">
-        <div class="flex items-start justify-between mb-2">
-            <div>
-                <h3 class="text-lg font-medium text-gray-900"></h3>
-                <p class="text-sm text-gray-600 mt-0.5"></p>
-            </div>
-            <button class="play-audio p-2 text-[#4d72c3] hover:bg-[#4d72c3]/5 rounded-full transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M15.536 8.464a5 5 0 010 7.072M17.95 6.05a8 8 0 010 11.9M6.343 9.657L11 14.314V5.686L6.343 10.343a2 2 0 000 2.828z"/>
-                </svg>
-            </button>
-        </div>
-        <p class="text-sm text-gray-700"></p>
+    <div class="bg-white p-6 rounded-lg border border-[#e2e8f0] shadow-sm flex flex-col justify-center items-center min-h-[220px] relative">
+        <button class="play-audio absolute top-2 right-2 text-[#4d72c3] hover:bg-[#4d72c3]/5 p-2 rounded-full transition-colors">
+            🔊
+        </button>
+        <h3 class="text-4xl font-bold text-gray-900"></h3> <!-- 단어 크게 표시 -->
+        <p class="text-sm text-gray-700 text-center meaning mt-4"></p> <!-- 뜻 개행 포함 -->
     </div>
 </template>
 
 <script>
     let words = [];
-    // 요소가 존재하는지 확인 후 이벤트 리스너 추가
-    const searchInput = document.getElementById("searchInput");
-    const dayFilter = document.getElementById("dayFilter");
+    let meaningsHidden = false;
+    let selectedDays = new Set();
+    let selectedPOS = "";
+    let sortMethod = "default";
 
-    if (searchInput) searchInput.addEventListener("input", filterWords);
-    if (dayFilter) dayFilter.addEventListener("change", filterWords);
+    function extractPOS(meaning) {
+        if (!meaning) return "";
+        const posPatterns = ["n\\.", "v\\.", "adj\\.", "adv\\.", "phr\\."];
+        return posPatterns.filter(pos => new RegExp(pos).test(meaning)).join(", ");
+    }
 
-    loadWords();
+    function renderWords(wordsToShow) {
+        const grid = document.getElementById("wordsGrid");
+        const template = document.getElementById("wordCardTemplate");
+        grid.innerHTML = "";
+
+        if (sortMethod === "random") {
+            wordsToShow = wordsToShow.sort(() => Math.random() - 0.5);
+        } else if (sortMethod === "alphabet") {
+            wordsToShow = wordsToShow.sort((a, b) => a.Words.localeCompare(b.Words));
+        }
+
+        wordsToShow.forEach(word => {
+            const card = template.content.cloneNode(true);
+            const title = card.querySelector("h3");
+            const meaning = card.querySelector(".meaning");
+            const playButton = card.querySelector(".play-audio");
+
+            title.textContent = word.Words;
+            meaning.innerHTML = formatMeaning(word.Meaning);
+            meaning.style.display = meaningsHidden ? "none" : "block";
+
+            playButton.onclick = () => speak(word.Words);
+
+            grid.appendChild(card);
+        });
+    }
 
     async function loadWords() {
         try {
@@ -65,73 +109,107 @@
 
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             words = XLSX.utils.sheet_to_json(firstSheet);
-            words = words.filter((word) => word.Day);
+            words = words.filter(word => word.Day);
 
-            // 필터 옵션 생성
-            const days = [...new Set(words.map(word => word.Day))]
-                .filter(day => day)
-                .sort((a, b) => a - b);
-
-            const dayFilter = document.getElementById("dayFilter");
-            days.forEach(day => {
-                const option = document.createElement("option");
-                option.value = day;
-                option.textContent = `Day ${day}`;
-                dayFilter.appendChild(option);
+            words.forEach(word => {
+                word.POS = extractPOS(word.Meaning);
             });
 
-            console.log(words);
+            createDayFilter(30);
             renderWords(words);
+            addEventListeners();
         } catch (error) {
             console.error("❌ Error loading words:", error);
         }
     }
 
-    function renderWords(wordsToShow) {
-        const grid = document.getElementById("wordsGrid");
-        const template = document.getElementById("wordCardTemplate");
-        grid.innerHTML = "";
-
-        wordsToShow.forEach(word => {
-            const card = template.content.cloneNode(true);
-            const title = card.querySelector("h3");
-            const pronunciation = card.querySelector("p:first-of-type");
-            const meaning = card.querySelector("p:last-of-type");
-            const playButton = card.querySelector(".play-audio");
-
-            title.textContent = word.Words;
-            pronunciation.textContent = word.Words || '';
-            meaning.textContent = word.Meaning;
-
-            playButton.onclick = () => speak(word.Words);
-
-            grid.appendChild(card);
-        });
-    }
-
     function filterWords() {
-        const searchTerm = document.getElementById("searchInput").value.toLowerCase();
-        const selectedDay = document.getElementById("dayFilter").value;
-
-        let filtered = words;
-
-        if (searchTerm) {
-            filtered = filtered.filter(word =>
-                word.Word?.toLowerCase().includes(searchTerm) ||
-                word.Meaning?.toLowerCase().includes(searchTerm)
-            );
-        }
-
-        if (selectedDay) {
-            filtered = filtered.filter(word => word.Day === parseInt(selectedDay));
-        }
-
+        let filtered = words.filter(word =>
+            (selectedDays.size === 0 || selectedDays.has(word.Day)) &&
+            (selectedPOS === "" || word.POS.includes(selectedPOS))
+        );
         renderWords(filtered);
     }
 
-    function speak(text) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "en-US";
-        speechSynthesis.speak(utterance);
+    function addEventListeners() {
+        document.getElementById("searchInput").addEventListener("input", filterWords);
+        document.getElementById("toggleMeanings").addEventListener("click", toggleMeanings);
+        document.getElementById("sortFilter").addEventListener("change", (e) => {
+            sortMethod = e.target.value;
+            filterWords();
+        });
+        document.getElementById("posFilter").addEventListener("change", (e) => {
+            selectedPOS = e.target.value;
+            filterWords();
+        });
+        document.getElementById("selectAllDays").addEventListener("click", selectAllDays);
+        document.getElementById("clearAllDays").addEventListener("click", clearAllDays);
     }
+
+    function createDayFilter(maxDay) {
+        const container = document.getElementById("dayFilterContainer");
+        container.innerHTML = "";
+
+        for (let day = 1; day <= maxDay; day++) {
+            const label = document.createElement("label");
+            label.className = "flex items-center gap-2 text-xs cursor-pointer bg-gray-200 px-3 py-1 rounded-md transition hover:bg-gray-300";
+            label.innerHTML = `
+            <input type="checkbox" value="${day}" class="hidden"> <span>Day ${day}</span>
+        `;
+            label.addEventListener("click", function () {
+                const checkbox = label.querySelector("input");
+                checkbox.checked = !checkbox.checked;
+                toggleDaySelection({ target: checkbox });
+                label.classList.toggle("bg-blue-500", checkbox.checked);
+                label.classList.toggle("text-white", checkbox.checked);
+            });
+            container.appendChild(label);
+        }
+    }
+
+    function toggleDaySelection(e) {
+        const day = parseInt(e.target.value);
+        if (e.target.checked) {
+            selectedDays.add(day);
+        } else {
+            selectedDays.delete(day);
+        }
+        filterWords();
+    }
+
+    function selectAllDays() {
+        selectedDays = new Set(Array.from({ length: 30 }, (_, i) => i + 1));
+        document.querySelectorAll("#dayFilterContainer input").forEach(cb => {
+            cb.checked = true;
+            cb.parentNode.classList.add("bg-blue-500", "text-white");
+        });
+        filterWords();
+    }
+
+    function clearAllDays() {
+        selectedDays.clear();
+        document.querySelectorAll("#dayFilterContainer input").forEach(cb => {
+            cb.checked = false;
+            cb.parentNode.classList.remove("bg-blue-500", "text-white");
+        });
+        filterWords();
+    }
+
+    function toggleMeanings() {
+        meaningsHidden = !meaningsHidden;
+        document.querySelectorAll(".meaning").forEach(meaning => {
+            meaning.style.display = meaningsHidden ? "none" : "block";
+        });
+    }
+
+    function formatMeaning(meaning) {
+        if (!meaning) return "";
+        return meaning.replace(/(n\.|v\.|adj\.|adv\.|phr\.)/g, "<br><span class='font-semibold text-[#4d72c3]'>$1</span> ");
+    }
+
+    function speak(text) {
+        speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+    }
+
+    loadWords();
 </script>
