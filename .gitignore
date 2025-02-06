@@ -1,0 +1,26 @@
+# Node.js 관련 (사용하는 경우)
+node_modules/
+package-lock.json
+yarn.lock
+
+# 빌드/배포 파일
+dist/
+build/
+.DS_Store
+
+# 환경설정 및 캐시 파일
+*.log
+*.cache
+npm-debug.log
+yarn-error.log
+.vscode/
+.idea/
+.env
+.env.local
+
+# GitHub Pages에 포함되지 않아야 할 파일
+temp/
+debug.log
+
+# MacOS 관련 (불필요한 시스템 파일)
+.DS_Store

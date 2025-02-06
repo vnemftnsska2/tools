@@ -39,7 +39,7 @@
 </template>
 
 <script>
-    if (!window.words) window.words = [];
+    let words = [];
     // 요소가 존재하는지 확인 후 이벤트 리스너 추가
     const searchInput = document.getElementById("searchInput");
     const dayFilter = document.getElementById("dayFilter");
@@ -51,13 +51,11 @@
 
     async function loadWords() {
         try {
-            const currentPath = window.location.pathname;
+            const currentPath = location.pathname;
             const isGitHubPages = currentPath.includes("/tools/") ? "/tools" : "";
             const filePath = isGitHubPages
                 ? "https://vnemftnsska2.github.io/tools/public/hackers_words.xlsx"
                 : "../public/hackers_words.xlsx";
-
-            console.log(`📂 Loading words from: ${filePath}`);
 
             const response = await fetch(filePath);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -66,10 +64,14 @@
             const workbook = XLSX.read(arrayBuffer, { type: "array" });
 
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            window.words = XLSX.utils.sheet_to_json(firstSheet);
+            words = XLSX.utils.sheet_to_json(firstSheet);
+            words = words.filter((word) => word.Day);
 
             // 필터 옵션 생성
-            const days = [...new Set(window.words.map(word => word.Day))].sort((a, b) => a - b);
+            const days = [...new Set(words.map(word => word.Day))]
+                .filter(day => day)
+                .sort((a, b) => a - b);
+
             const dayFilter = document.getElementById("dayFilter");
             days.forEach(day => {
                 const option = document.createElement("option");
@@ -78,7 +80,8 @@
                 dayFilter.appendChild(option);
             });
 
-            renderWords(window.words);
+            console.log(words);
+            renderWords(words);
         } catch (error) {
             console.error("❌ Error loading words:", error);
         }
@@ -91,38 +94,36 @@
 
         wordsToShow.forEach(word => {
             const card = template.content.cloneNode(true);
-
             const title = card.querySelector("h3");
-            title.textContent = word.Word;
-
             const pronunciation = card.querySelector("p:first-of-type");
-            pronunciation.textContent = word.Pronunciation;
-
             const meaning = card.querySelector("p:last-of-type");
+            const playButton = card.querySelector(".play-audio");
+
+            title.textContent = word.Words;
+            pronunciation.textContent = word.Words || '';
             meaning.textContent = word.Meaning;
 
-            const playButton = card.querySelector(".play-audio");
-            playButton.onclick = () => speak(word.Word);
+            playButton.onclick = () => speak(word.Words);
 
             grid.appendChild(card);
         });
     }
 
     function filterWords() {
-        const searchTerm = document.getElementById("searchInput")?.value.toLowerCase() || "";
-        const selectedDay = document.getElementById("dayFilter")?.value || "";
+        const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+        const selectedDay = document.getElementById("dayFilter").value;
 
-        let filtered = window.words;
+        let filtered = words;
 
         if (searchTerm) {
             filtered = filtered.filter(word =>
-                word.Word.toLowerCase().includes(searchTerm) ||
-                word.Meaning.toLowerCase().includes(searchTerm)
+                word.Word?.toLowerCase().includes(searchTerm) ||
+                word.Meaning?.toLowerCase().includes(searchTerm)
             );
         }
 
         if (selectedDay) {
-            filtered = filtered.filter(word => word.Day == selectedDay);
+            filtered = filtered.filter(word => word.Day === parseInt(selectedDay));
         }
 
         renderWords(filtered);
